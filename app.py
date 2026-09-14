@@ -2,13 +2,10 @@ import streamlit as st
 import google.generativeai as genai
 import whisper
 import os
-from pydub import AudioSegment
-from pydub.silence import split_on_silence
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 
 st.set_page_config(page_title="Chimba AI Studio Pro", page_icon="🚀", layout="centered")
 
-# Enlace de tu pasarela de pagos (Stripe o PayPal)
 LINK_STRIPE_MENSUAL = "https://stripe.com"
 
 if "es_pro" not in st.session_state:
@@ -20,7 +17,7 @@ with st.sidebar:
         st.success("Cuenta: PLAN PRO ACTIVO ✨")
     else:
         st.warning("Cuenta: PLAN GRATUITO 🛑")
-        st.write("Desbloquea fuentes exclusivas, videos largos y corte de silencios.")
+        st.write("Desbloquea fuentes exclusivas y videos más largos.")
         st.markdown(f"[👉 Adquirir Plan PRO por $9.99/mes]({LINK_STRIPE_MENSUAL})")
         
         codigo_activacion = st.text_input("🔑 ¿Ya pagaste? Introduce tu código:")
@@ -78,30 +75,11 @@ with tab2:
                 
         with col3:
             tamano_sub = st.slider("📏 Tamaño:", 24, 60, 36)
-            
-        if st.session_state.es_pro:
-            corte_silencios = st.checkbox("✂️ Activar Recorte Inteligente de Silencios", value=True)
-        else:
-            corte_silencios = st.checkbox("✂️ Activar Recorte Inteligente de Silencios", value=False, disabled=True, help="Función exclusiva para usuarios PRO")
         
         if st.button("⚡ Procesar Video"):
             with st.spinner("Editando video..."):
                 try:
                     video_final_path = "video_input.mp4"
-                    
-                    if corte_silencios and st.session_state.es_pro:
-                        st.write("⏱️ Eliminando silencios con IA PRO...")
-                        video_clip_temp = VideoFileClip("video_input.mp4")
-                        video_clip_temp.audio.write_audiofile("audio_temp.wav", fps=44100, nbytes=2, codec='pcm_s16le', verbose=False, logger=None)
-                        video_clip_temp.close()
-                        
-                        sonido = AudioSegment.from_wav("audio_temp.wav")
-                        chunks = split_on_silence(sonido, min_silence_len=500, silence_thresh=-40, keep_silence=100)
-                        
-                        audio_sin_silencio = AudioSegment.empty()
-                        for chunk in chunks:
-                            audio_sin_silencio += chunk
-                        audio_sin_silencio.export("audio_perfecto.wav", format="wav")
                     
                     model_whisper = whisper.load_model("base")
                     result = model_whisper.transcribe(video_final_path, language="es")
@@ -119,11 +97,6 @@ with tab2:
                         clips_texto.append(txt_clip)
                     
                     video_editado = CompositeVideoClip([video] + clips_texto)
-                    
-                    if corte_silencios and st.session_state.es_pro and os.path.exists("audio_perfecto.wav"):
-                        from moviepy.editor import AudioFileClip
-                        audio_nuevo = AudioFileClip("audio_perfecto.wav")
-                        video_editado = video_editado.set_audio(audio_nuevo)
                         
                     if not st.session_state.es_pro:
                         st.info("Añadiendo marca de agua protectora (Plan Gratis)")
