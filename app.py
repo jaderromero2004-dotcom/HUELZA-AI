@@ -1,16 +1,3 @@
-# 1. Instalamos librerías, ImageMagick, FFmpeg y descargamos fuentes tipográficas virales
-!apt-get update -y -q
-!apt-get install -y -q imagemagick ffmpeg fonts-liberation
-# Descargamos e instalamos la fuente 'Impact' y 'Montserrat' para que MoviePy las reconozca en Linux
-!wget -q -O /usr/share/fonts/truetype/liberation/Impact.ttf https://github.com
-!fc-cache -f -v
-!pip install -q streamlit google-generativeai moviepy openai-whisper pydub
-
-# Corregimos la política de seguridad de ImageMagick
-!sed -i 's/<policy domain="path" rights="none" pattern="@\*"/<!-- <policy domain="path" rights="none" pattern="@\*" \/> -->/g' /etc/ImageMagick-6/policy.xml
-
-# 2. Escribimos la versión comercial de la app
-code = """
 import streamlit as st
 import google.generativeai as genai
 import whisper
@@ -21,14 +8,12 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 
 st.set_page_config(page_title="Chimba AI Studio Pro", page_icon="🚀", layout="centered")
 
-# Simulación de control de usuario (Aquí defines tus links de Stripe)
+# Enlace de tu pasarela de pagos (Stripe o PayPal)
 LINK_STRIPE_MENSUAL = "https://stripe.com"
 
-# Inicializar estado de suscripción en la sesión del navegador
 if "es_pro" not in st.session_state:
     st.session_state.es_pro = False
 
-# Barra lateral para el estado de la cuenta y activación
 with st.sidebar:
     st.header("👑 Tu Cuenta")
     if st.session_state.es_pro:
@@ -38,9 +23,8 @@ with st.sidebar:
         st.write("Desbloquea fuentes exclusivas, videos largos y corte de silencios.")
         st.markdown(f"[👉 Adquirir Plan PRO por $9.99/mes]({LINK_STRIPE_MENSUAL})")
         
-        # Sistema de activación manual para tus primeros clientes
         codigo_activacion = st.text_input("🔑 ¿Ya pagaste? Introduce tu código:")
-        if codigo_activacion == "CHIMBAPRO2026": # Código secreto temporal para pruebas
+        if codigo_activacion == "CHIMBAPRO2026": 
             st.session_state.es_pro = True
             st.success("¡Plan PRO activado con éxito!")
             st.rerun()
@@ -87,16 +71,14 @@ with tab2:
             color_sub = st.selectbox("🎨 Color:", ["YELLOW", "WHITE", "GREEN", "CYAN"])
             
         with col2:
-            # Aquí limitamos las fuentes si el usuario no es PRO
             if st.session_state.es_pro:
-                fuente_sub = st.selectbox("🔤 Fuente (Letra):", ["Impact", "Liberation-Sans-Bold", "DejaVu-Sans-Bold", "Courier-Bold"])
+                fuente_sub = st.selectbox("🔤 Fuente (Letra):", ["Liberation-Sans-Bold", "DejaVu-Sans-Bold", "Courier-Bold"])
             else:
-                fuente_sub = st.selectbox("🔤 Fuente (Letra):", ["Liberation-Sans-Bold"], help="¡Plan PRO para desbloquear fuente Impact (TikTok Style)!")
+                fuente_sub = st.selectbox("🔤 Fuente (Letra):", ["Liberation-Sans-Bold"], help="¡Plan PRO para desbloquear más fuentes!")
                 
         with col3:
             tamano_sub = st.slider("📏 Tamaño:", 24, 60, 36)
             
-        # Bloqueamos el recorte de silencios para usuarios gratis
         if st.session_state.es_pro:
             corte_silencios = st.checkbox("✂️ Activar Recorte Inteligente de Silencios", value=True)
         else:
@@ -143,7 +125,6 @@ with tab2:
                         audio_nuevo = AudioFileClip("audio_perfecto.wav")
                         video_editado = video_editado.set_audio(audio_nuevo)
                         
-                    # Si es gratis, le clavamos una marca de agua de nuestra marca para hacer publicidad gratis
                     if not st.session_state.es_pro:
                         st.info("Añadiendo marca de agua protectora (Plan Gratis)")
                         marca = TextClip("Hecho con Chimba AI", fontsize=20, color='white', font='Liberation-Sans-Bold')
@@ -157,15 +138,3 @@ with tab2:
                     
                 except Exception as e:
                     st.error(f"🚨 Error: {e}")
-"""
-
-with open("app.py", "w", encoding="utf-8") as f:
-    f.write(code)
-
-print("✅ Versión 4.0 comercial lista. Encendiendo túnel...")
-
-import time
-import subprocess
-subprocess.Popen(["streamlit", "run", "app.py", "--server.port", "8501"])
-time.sleep(5)
-!ssh -o StrictHostKeyChecking=no -R 80:localhost:8501 serveo.net
