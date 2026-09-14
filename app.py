@@ -2,7 +2,8 @@ import streamlit as st
 import google.generativeai as genai
 import whisper
 import os
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+# Importación moderna de MoviePy compatible con la nube actual
+import moviepy as mp
 
 st.set_page_config(page_title="Chimba AI Studio Pro", page_icon="🚀", layout="centered")
 
@@ -84,7 +85,8 @@ with tab2:
                     model_whisper = whisper.load_model("base")
                     result = model_whisper.transcribe(video_final_path, language="es")
                     
-                    video = VideoFileClip(video_final_path)
+                    # Llamadas con la nueva estructura de MoviePy
+                    video = mp.VideoFileClip(video_final_path)
                     clips_texto = []
                     
                     for segment in result["segments"]:
@@ -92,17 +94,17 @@ with tab2:
                         inicio = segment["start"]
                         fin = segment["end"]
                         
-                        txt_clip = TextClip(texto, fontsize=tamano_sub, color=color_sub.lower(), font=fuente_sub, method='caption', size=(video.w*0.8, None))
+                        txt_clip = mp.TextClip(texto, fontsize=tamano_sub, color=color_sub.lower(), font=fuente_sub, method='caption', size=(video.w*0.8, None))
                         txt_clip = txt_clip.set_start(inicio).set_end(fin).set_position(('center', 'center'))
                         clips_texto.append(txt_clip)
                     
-                    video_editado = CompositeVideoClip([video] + clips_texto)
+                    video_editado = mp.CompositeVideoClip([video] + clips_texto)
                         
                     if not st.session_state.es_pro:
                         st.info("Añadiendo marca de agua protectora (Plan Gratis)")
-                        marca = TextClip("Hecho con Chimba AI", fontsize=20, color='white', font='Liberation-Sans-Bold')
+                        marca = mp.TextClip("Hecho con Chimba AI", fontsize=20, color='white', font='Liberation-Sans-Bold')
                         marca = marca.set_start(0).set_end(video.duration).set_position(('right', 'top'))
-                        video_editado = CompositeVideoClip([video_editado, marca])
+                        video_editado = mp.CompositeVideoClip([video_editado, marca])
                         
                     video_editado.write_videofile("video_renderizado.mp4", fps=video.fps, codec="libx264", audio_codec="aac", verbose=False, logger=None)
                     
