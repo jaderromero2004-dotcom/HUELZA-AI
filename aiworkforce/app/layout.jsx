@@ -1,0 +1,1 @@
+export const metadata={title:"Trabajadores AI | HUELZA",description:"Sistema comercial inteligente de HUELZA"};export default function RootLayout({children}){return <html lang="es"><body>{children}</body></html>}
